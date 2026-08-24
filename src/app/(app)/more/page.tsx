@@ -29,6 +29,7 @@ const ITEMS = [
   { href: '/more/currencies', label: 'Currencies & Exchange Rates', icon: Coins },
   { href: '/more/receipts', label: 'Scan Receipts', icon: ScanLine },
   { href: '/shopping', label: 'Shopping / Grocery Tracker', icon: ShoppingBasket },
+  { href: '/more/grocery-insights', label: 'Grocery Insights', icon: Tags },
   { href: '/more/shopping-list', label: 'Shopping List', icon: ListChecks },
   { href: '/more/export', label: 'Data Export', icon: Download },
   { href: '/more/theme', label: 'Theme', icon: Moon },
