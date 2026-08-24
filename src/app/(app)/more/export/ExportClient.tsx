@@ -15,9 +15,9 @@ function download(filename: string, content: string, mime: string) {
   URL.revokeObjectURL(url);
 }
 
-function toCsv(rows: Record<string, unknown>[]): string {
+function toCsv<T extends object>(rows: T[]): string {
   if (rows.length === 0) return '';
-  const headers = Object.keys(rows[0]);
+  const headers = Object.keys(rows[0]) as (keyof T)[];
   const escape = (v: unknown) => {
     const s = v === null || v === undefined ? '' : typeof v === 'object' ? JSON.stringify(v) : String(v);
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -33,7 +33,7 @@ export function ExportClient({ household, shopping }: { household: HouseholdData
       <PageHeader title="Data Export" backHref="/more" />
 
       <Card className="mb-3">
-        <p className="mb-3 text-sm text-teal-900/70">Export everything as one JSON file — a full backup of your household's data.</p>
+        <p className="mb-3 text-sm text-teal-900/70">Export everything as one JSON file — a full backup of your household&apos;s data.</p>
         <button
           onClick={() => download('family-finance-export.json', JSON.stringify(everything, null, 2), 'application/json')}
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-900 py-3 text-sm font-medium text-white"

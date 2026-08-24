@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import type { Goal, Member } from '@/lib/finance/types';
 import { goalProgress, monthsToComplete } from '@/lib/finance/goals';
-import { Card, SectionHeader } from '@/components/ui/Card';
+import { Card } from '@/components/ui/Card';
 import { Money } from '@/components/ui/Money';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';

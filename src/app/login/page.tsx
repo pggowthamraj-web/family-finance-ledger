@@ -55,7 +55,7 @@ export default async function LoginPage({
         </form>
 
         <p className="mt-6 text-center text-xs text-teal-300">
-          Accounts are created by an admin in the Supabase dashboard — there's no public sign-up.
+          Accounts are created by an admin in the Supabase dashboard — there&apos;s no public sign-up.
         </p>
       </div>
     </main>

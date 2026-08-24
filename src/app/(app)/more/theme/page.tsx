@@ -12,6 +12,8 @@ export default function ThemePage() {
 
   useEffect(() => {
     const stored = (localStorage.getItem('theme') as ThemeChoice) ?? 'system';
+    // Syncing state from localStorage (an external system) on mount, not derived from props/state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTheme(stored);
   }, []);
 
