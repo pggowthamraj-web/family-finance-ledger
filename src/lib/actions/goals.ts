@@ -1,5 +1,6 @@
 'use server';
 
+import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { db, requireHousehold, genId, str, num } from './helpers';
 import type { GoalContribution } from '@/lib/finance/types';
@@ -79,4 +80,14 @@ export async function addGoalContribution(id: string, amount: number, date: stri
   if (error) throw new Error(error.message);
   revalidatePath('/goals');
   revalidatePath('/dashboard');
+}
+
+/** Form-friendly wrapper for the quick-action "Goal Contribution" screen. */
+export async function addGoalContributionForm(formData: FormData) {
+  const goalId = str(formData, 'goal_id');
+  const amount = num(formData, 'amount');
+  const date = str(formData, 'date') ?? new Date().toISOString().slice(0, 10);
+  if (!goalId || !amount) throw new Error('Choose a goal and an amount.');
+  await addGoalContribution(goalId, amount, date);
+  redirect('/goals');
 }
