@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --app-bg: #f6f5f1;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--app-bg);
+  color: #0f3d3d;
+}
+
+.dark body {
+  --app-bg: #08191a;
+  color: #eefbfa;
+}
+
+/* Bottom-nav safe area on iOS */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(15, 61, 61, 0.15);
+  border-radius: 999px;
+}
