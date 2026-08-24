@@ -11,10 +11,33 @@
 //   SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... \
 //     node scripts/import.mjs <finance-export.json> <shopping-export.json> [gowtham-email] [sanjana-email]
 //
-// (`npm run import:data` reads the same vars from .env.local automatically.)
+// Also auto-loads .env.local from the project root if present (no `dotenv`
+// dependency needed, and no reliance on Node's --env-file flag, so this
+// runs on any Node >=18.17, not just 20.6+).
 
 import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
+
+function loadDotEnvLocal() {
+  const dir = path.dirname(fileURLToPath(import.meta.url));
+  const envPath = path.join(dir, '..', '.env.local');
+  if (!fs.existsSync(envPath)) return;
+  for (const line of fs.readFileSync(envPath, 'utf8').split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eq = trimmed.indexOf('=');
+    if (eq === -1) continue;
+    const key = trimmed.slice(0, eq).trim();
+    let value = trimmed.slice(eq + 1).trim();
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    if (!(key in process.env)) process.env[key] = value;
+  }
+}
+loadDotEnvLocal();
 
 const [, , financePath, shoppingPath, gowthamEmail, sanjanaEmail] = process.argv;
 
