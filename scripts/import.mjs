@@ -8,7 +8,7 @@
 // own machine (or CI) — not from a locked-down sandbox.
 //
 // Usage:
-//   SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... \
+//   SUPABASE_URL=... SUPABASE_SECRET_KEY=... \
 //     node scripts/import.mjs <finance-export.json> <shopping-export.json> [gowtham-email] [sanjana-email]
 //
 // Also auto-loads .env.local from the project root if present (no `dotenv`
@@ -42,10 +42,10 @@ loadDotEnvLocal();
 const [, , financePath, shoppingPath, gowthamEmail, sanjanaEmail] = process.argv;
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-  console.error('Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (service role, not anon) before running.');
+  console.error('Set SUPABASE_URL and SUPABASE_SECRET_KEY (the secret key, not the publishable key) before running.');
   process.exit(1);
 }
 if (!financePath || !shoppingPath) {

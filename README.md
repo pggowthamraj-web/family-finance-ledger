@@ -11,7 +11,7 @@ flow) has a small, separately testable module there.
 
 ## Stack
 
-- **Frontend**: Next.js 14 (App Router, TypeScript, Tailwind CSS)
+- **Frontend**: Next.js 16 (App Router, TypeScript, Tailwind CSS v4)
 - **Database + Auth**: Supabase (Postgres, Auth, RLS)
 - **Hosting**: Vercel
 - **Charts**: Recharts · **Icons**: lucide-react
@@ -108,7 +108,7 @@ src/
   components/                  shared UI + entity forms
   lib/
     finance/                   pure business-logic modules (see below)
-    supabase/                  browser/server/middleware clients + queries
+    supabase/                  browser/server/proxy clients + queries
     actions/                   Next.js Server Actions (all writes)
 supabase/
   migrations/                  schema, RLS, auth-link trigger — run in order
