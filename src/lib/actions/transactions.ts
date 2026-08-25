@@ -1,5 +1,6 @@
 'use server';
 
+import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { db, requireHousehold, genId, str, num, bool } from './helpers';
 import type { ReceiptItem } from '@/lib/finance/types';
@@ -36,6 +37,7 @@ export async function createTransaction(formData: FormData) {
   revalidatePath('/dashboard');
   revalidatePath('/transactions');
   revalidatePath('/accounts');
+  redirect('/transactions');
 }
 
 export async function updateTransaction(id: string, formData: FormData) {
@@ -68,6 +70,7 @@ export async function updateTransaction(id: string, formData: FormData) {
   revalidatePath('/dashboard');
   revalidatePath('/transactions');
   revalidatePath('/accounts');
+  redirect('/transactions');
 }
 
 export async function deleteTransaction(id: string) {
@@ -78,6 +81,7 @@ export async function deleteTransaction(id: string) {
   revalidatePath('/dashboard');
   revalidatePath('/transactions');
   revalidatePath('/accounts');
+  redirect('/transactions');
 }
 
 /**

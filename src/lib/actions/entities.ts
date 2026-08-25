@@ -1,5 +1,6 @@
 'use server';
 
+import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { db, requireHousehold, genId, str, num, bool } from './helpers';
 
@@ -128,6 +129,7 @@ export async function createAsset(formData: FormData) {
   if (error) throw new Error(error.message);
   revalidatePath('/more/assets');
   revalidatePath('/dashboard');
+  redirect('/more/assets');
 }
 
 export async function updateAsset(id: string, formData: FormData) {
@@ -159,6 +161,7 @@ export async function updateAsset(id: string, formData: FormData) {
   if (error) throw new Error(error.message);
   revalidatePath('/more/assets');
   revalidatePath('/dashboard');
+  redirect('/more/assets');
 }
 
 export async function deleteAsset(id: string) {
@@ -168,6 +171,7 @@ export async function deleteAsset(id: string) {
   if (error) throw new Error(error.message);
   revalidatePath('/more/assets');
   revalidatePath('/dashboard');
+  redirect('/more/assets');
 }
 
 // --- investments -----------------------------------------------------
@@ -257,6 +261,7 @@ export async function createLiability(formData: FormData) {
   if (error) throw new Error(error.message);
   revalidatePath('/more/liabilities');
   revalidatePath('/dashboard');
+  redirect('/more/liabilities');
 }
 
 export async function updateLiability(id: string, formData: FormData) {
@@ -283,6 +288,7 @@ export async function updateLiability(id: string, formData: FormData) {
   if (error) throw new Error(error.message);
   revalidatePath('/more/liabilities');
   revalidatePath('/dashboard');
+  redirect('/more/liabilities');
 }
 
 export async function deleteLiability(id: string) {
@@ -292,6 +298,7 @@ export async function deleteLiability(id: string) {
   if (error) throw new Error(error.message);
   revalidatePath('/more/liabilities');
   revalidatePath('/dashboard');
+  redirect('/more/liabilities');
 }
 
 // --- budgets -----------------------------------------------------------
