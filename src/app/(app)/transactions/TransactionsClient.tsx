@@ -99,7 +99,9 @@ export function TransactionsClient({ data }: { data: HouseholdData }) {
       <p className="mb-2 text-xs text-teal-900/50">{filtered.length} transactions</p>
 
       <div className="space-y-2">
-        {filtered.slice(0, 200).map((t) => (
+        {filtered.slice(0, 200).map((t) => {
+          const person = members.find((m) => m.id === t.person_id);
+          return (
           <Link key={t.id} href={`/transactions/${t.id}/edit`} className="block">
             <Card className="flex items-center justify-between gap-3 py-3">
               <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -118,8 +120,19 @@ export function TransactionsClient({ data }: { data: HouseholdData }) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-teal-900">{t.description || 'Untitled'}</p>
-                  <p className="truncate text-xs text-teal-900/50">
-                    {t.date} · {t.type === 'transfer' ? `${accountName(t.account_id)} → ${accountName(t.to_account_id ?? '')}` : categoryName(t.category_id)}
+                  <p className="mt-0.5 flex items-center gap-1.5 truncate text-xs text-teal-900/50">
+                    <span className="flex-shrink-0 whitespace-nowrap">{t.date} ·</span>
+                    {person && (
+                      <span
+                        className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-[9px] font-semibold text-white"
+                        style={{ backgroundColor: colorFor(person.color) }}
+                      >
+                        {person.name.slice(0, 1)}
+                      </span>
+                    )}
+                    <span className="truncate">
+                      {t.type === 'transfer' ? `${accountName(t.account_id)} → ${accountName(t.to_account_id ?? '')}` : categoryName(t.category_id)}
+                    </span>
                   </p>
                 </div>
               </div>
@@ -133,7 +146,8 @@ export function TransactionsClient({ data }: { data: HouseholdData }) {
               />
             </Card>
           </Link>
-        ))}
+          );
+        })}
         {filtered.length > 200 && (
           <p className="py-4 text-center text-xs text-teal-900/40">Showing first 200 — narrow your filters to see more.</p>
         )}
@@ -143,3 +157,8 @@ export function TransactionsClient({ data }: { data: HouseholdData }) {
 }
 
 const selectClass = 'rounded-xl border border-teal-900/10 bg-teal-50/50 px-2 py-1.5 text-sm';
+
+function colorFor(color: string | null): string {
+  const map: Record<string, string> = { teal: '#0f3d3d', amber: '#f5a623', rose: '#e94560', emerald: '#0f9d70' };
+  return map[color ?? ''] ?? '#0f3d3d';
+}
