@@ -1,16 +1,36 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { Search, ArrowUpRight, ArrowDownLeft, ArrowLeftRight } from 'lucide-react';
-import type { HouseholdData } from '@/lib/supabase/queries';
+import { Search, ArrowUpRight, ArrowDownLeft, ArrowLeftRight, Loader2 } from 'lucide-react';
+import type { Account, Category, Member, Transaction } from '@/lib/finance/types';
+import type { TransactionFilters } from '@/lib/supabase/queries';
+import { loadTransactionsPage } from '@/lib/actions/transactions';
 import { Card } from '@/components/ui/Card';
 import { Money } from '@/components/ui/Money';
 import { PageHeader } from '@/components/PageHeader';
 
-export function TransactionsClient({ data }: { data: HouseholdData }) {
-  const { transactions, categories, members, accounts } = data;
+export function TransactionsClient({
+  members,
+  categories,
+  accounts,
+  initialTransactions,
+  initialTotal,
+  initialHasMore,
+  currencies,
+  countries,
+}: {
+  members: Member[];
+  categories: Category[];
+  accounts: Account[];
+  initialTransactions: Transaction[];
+  initialTotal: number;
+  initialHasMore: boolean;
+  currencies: string[];
+  countries: string[];
+}) {
   const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [personId, setPersonId] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [currency, setCurrency] = useState('');
@@ -18,24 +38,59 @@ export function TransactionsClient({ data }: { data: HouseholdData }) {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
 
-  const countries = useMemo(
-    () => [...new Set(transactions.map((t) => t.country).filter(Boolean))] as string[],
-    [transactions]
-  );
-  const currencies = useMemo(() => [...new Set(transactions.map((t) => t.currency))], [transactions]);
+  const [transactions, setTransactions] = useState(initialTransactions);
+  const [total, setTotal] = useState(initialTotal);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [isPending, startTransition] = useTransition();
 
-  const filtered = useMemo(() => {
-    return transactions.filter((t) => {
-      if (query && !(t.description ?? '').toLowerCase().includes(query.toLowerCase())) return false;
-      if (personId && t.person_id !== personId) return false;
-      if (categoryId && t.category_id !== categoryId) return false;
-      if (currency && t.currency !== currency) return false;
-      if (country && t.country !== country) return false;
-      if (from && t.date < from) return false;
-      if (to && t.date > to) return false;
-      return true;
+  // Debounce the free-text search so it doesn't refetch on every keystroke.
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  const filters: TransactionFilters = {
+    search: debouncedQuery || undefined,
+    personId: personId || undefined,
+    categoryId: categoryId || undefined,
+    currency: currency || undefined,
+    country: country || undefined,
+    from: from || undefined,
+    to: to || undefined,
+  };
+  const filtersKey = JSON.stringify(filters);
+
+  // Ignore stale responses if filters change again before an in-flight fetch resolves.
+  const requestId = useRef(0);
+  const isFirstRun = useRef(true);
+
+  useEffect(() => {
+    if (isFirstRun.current) {
+      // Skip the refetch on mount -- the server already gave us page 0 for empty filters.
+      isFirstRun.current = false;
+      return;
+    }
+    const thisRequest = ++requestId.current;
+    startTransition(async () => {
+      const page = await loadTransactionsPage(filters, 0);
+      if (thisRequest !== requestId.current || !page) return;
+      setTransactions(page.transactions);
+      setTotal(page.total);
+      setHasMore(page.hasMore);
     });
-  }, [transactions, query, personId, categoryId, currency, country, from, to]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtersKey]);
+
+  function loadMore() {
+    const thisRequest = ++requestId.current;
+    startTransition(async () => {
+      const page = await loadTransactionsPage(filters, transactions.length);
+      if (thisRequest !== requestId.current || !page) return;
+      setTransactions((prev) => [...prev, ...page.transactions]);
+      setTotal(page.total);
+      setHasMore(page.hasMore);
+    });
+  }
 
   const categoryName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? 'Uncategorized';
   const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? id;
@@ -96,60 +151,75 @@ export function TransactionsClient({ data }: { data: HouseholdData }) {
         </div>
       </Card>
 
-      <p className="mb-2 text-xs text-teal-900/50">{filtered.length} transactions</p>
+      <p className="mb-2 flex items-center gap-1.5 text-xs text-teal-900/50">
+        {transactions.length} of {total} transactions
+        {isPending && <Loader2 size={12} className="animate-spin" />}
+      </p>
 
       <div className="space-y-2">
-        {filtered.slice(0, 200).map((t) => {
+        {transactions.map((t) => {
           const person = members.find((m) => m.id === t.person_id);
           return (
-          <Link key={t.id} href={`/transactions/${t.id}/edit`} className="block">
-            <Card className="flex items-center justify-between gap-3 py-3">
-              <div className="flex min-w-0 flex-1 items-center gap-3">
-                <div
-                  className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full ${
-                    t.type === 'income' ? 'bg-emerald-100' : t.type === 'expense' ? 'bg-rose-100' : 'bg-teal-900/[0.08]'
-                  }`}
-                >
-                  {t.type === 'income' ? (
-                    <ArrowDownLeft size={16} className="text-emerald-500" />
-                  ) : t.type === 'expense' ? (
-                    <ArrowUpRight size={16} className="text-rose-500" />
-                  ) : (
-                    <ArrowLeftRight size={16} className="text-teal-700" />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-teal-900">{t.description || 'Untitled'}</p>
-                  <p className="mt-0.5 flex items-center gap-1.5 truncate text-xs text-teal-900/50">
-                    <span className="flex-shrink-0 whitespace-nowrap">{t.date} ·</span>
-                    {person && (
-                      <span
-                        className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-[9px] font-semibold text-white"
-                        style={{ backgroundColor: colorFor(person.color) }}
-                      >
-                        {person.name.slice(0, 1)}
-                      </span>
+            <Link key={t.id} href={`/transactions/${t.id}/edit`} className="block">
+              <Card className="flex items-center justify-between gap-3 py-3">
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <div
+                    className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full ${
+                      t.type === 'income' ? 'bg-emerald-100' : t.type === 'expense' ? 'bg-rose-100' : 'bg-teal-900/[0.08]'
+                    }`}
+                  >
+                    {t.type === 'income' ? (
+                      <ArrowDownLeft size={16} className="text-emerald-500" />
+                    ) : t.type === 'expense' ? (
+                      <ArrowUpRight size={16} className="text-rose-500" />
+                    ) : (
+                      <ArrowLeftRight size={16} className="text-teal-700" />
                     )}
-                    <span className="truncate">
-                      {t.type === 'transfer' ? `${accountName(t.account_id)} → ${accountName(t.to_account_id ?? '')}` : categoryName(t.category_id)}
-                    </span>
-                  </p>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-teal-900">{t.description || 'Untitled'}</p>
+                    <p className="mt-0.5 flex items-center gap-1.5 truncate text-xs text-teal-900/50">
+                      <span className="flex-shrink-0 whitespace-nowrap">{t.date} ·</span>
+                      {person && (
+                        <span
+                          className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-[9px] font-semibold text-white"
+                          style={{ backgroundColor: colorFor(person.color) }}
+                        >
+                          {person.name.slice(0, 1)}
+                        </span>
+                      )}
+                      <span className="truncate">
+                        {t.type === 'transfer'
+                          ? `${accountName(t.account_id)} → ${accountName(t.to_account_id ?? '')}`
+                          : categoryName(t.category_id)}
+                      </span>
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <Money
-                amount={t.amount}
-                currency={t.currency}
-                signed={t.type !== 'transfer'}
-                className={`flex-shrink-0 whitespace-nowrap ${
-                  t.type === 'income' ? 'text-emerald-500' : t.type === 'expense' ? 'text-rose-500' : 'text-teal-900/70'
-                }`}
-              />
-            </Card>
-          </Link>
+                <Money
+                  amount={t.amount}
+                  currency={t.currency}
+                  signed={t.type !== 'transfer'}
+                  className={`flex-shrink-0 whitespace-nowrap ${
+                    t.type === 'income' ? 'text-emerald-500' : t.type === 'expense' ? 'text-rose-500' : 'text-teal-900/70'
+                  }`}
+                />
+              </Card>
+            </Link>
           );
         })}
-        {filtered.length > 200 && (
-          <p className="py-4 text-center text-xs text-teal-900/40">Showing first 200 — narrow your filters to see more.</p>
+        {transactions.length === 0 && !isPending && (
+          <p className="py-8 text-center text-sm text-teal-900/40">No transactions match these filters.</p>
+        )}
+        {hasMore && (
+          <button
+            onClick={loadMore}
+            disabled={isPending}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-teal-900/10 py-3 text-sm font-medium text-teal-900 disabled:opacity-50"
+          >
+            {isPending && <Loader2 size={14} className="animate-spin" />}
+            Load more
+          </button>
         )}
       </div>
     </div>

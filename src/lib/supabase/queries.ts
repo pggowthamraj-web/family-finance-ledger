@@ -113,6 +113,120 @@ export async function getHouseholdData(): Promise<HouseholdData | null> {
   };
 }
 
+export interface TransactionsPageContext {
+  household: Household;
+  member: Member;
+  members: Member[];
+  categories: Category[];
+  accounts: Account[];
+}
+
+/**
+ * Lightweight context for the transactions list -- members/categories/
+ * accounts only, deliberately NOT the full transactions table (see
+ * getTransactionsPage below for how the list itself is fetched).
+ */
+export async function getTransactionsPageContext(): Promise<TransactionsPageContext | null> {
+  const current = await getCurrentMember();
+  if (!current) return null;
+  const { member, household } = current;
+  const supabase = await createClient();
+
+  const [{ data: members }, { data: categories }, { data: accounts }] = await Promise.all([
+    supabase.from('members').select('*').eq('household_id', household.id),
+    supabase.from('categories').select('*').eq('household_id', household.id).order('sort_order'),
+    supabase.from('accounts').select('*').eq('household_id', household.id).order('name'),
+  ]);
+
+  return {
+    household,
+    member,
+    members: (members ?? []) as Member[],
+    categories: (categories ?? []) as Category[],
+    accounts: (accounts ?? []) as Account[],
+  };
+}
+
+export interface TransactionFilters {
+  search?: string;
+  personId?: string;
+  categoryId?: string;
+  currency?: string;
+  country?: string;
+  from?: string;
+  to?: string;
+}
+
+export interface TransactionsPageResult {
+  transactions: Transaction[];
+  total: number;
+  hasMore: boolean;
+}
+
+export const TRANSACTIONS_PAGE_SIZE = 50;
+
+/**
+ * Real server-side pagination over the household's transactions, with
+ * filters applied as actual WHERE clauses (not client-side array
+ * filtering) so both filtering and paging stay correct at any table
+ * size -- household transaction history is expected to keep growing as
+ * more bank statements are imported, so this must never load the whole
+ * table at once.
+ */
+export async function getTransactionsPage(
+  filters: TransactionFilters,
+  offset = 0,
+  limit = TRANSACTIONS_PAGE_SIZE
+): Promise<TransactionsPageResult | null> {
+  const current = await getCurrentMember();
+  if (!current) return null;
+  const supabase = await createClient();
+
+  let query = supabase
+    .from('transactions')
+    .select('*', { count: 'exact' })
+    .eq('household_id', current.household.id)
+    .order('date', { ascending: false })
+    .order('id', { ascending: false });
+
+  if (filters.search) query = query.ilike('description', `%${filters.search}%`);
+  if (filters.personId) query = query.eq('person_id', filters.personId);
+  if (filters.categoryId) query = query.eq('category_id', filters.categoryId);
+  if (filters.currency) query = query.eq('currency', filters.currency);
+  if (filters.country) query = query.eq('country', filters.country);
+  if (filters.from) query = query.gte('date', filters.from);
+  if (filters.to) query = query.lte('date', filters.to);
+
+  const { data, count, error } = await query.range(offset, offset + limit - 1);
+  if (error) throw new Error(error.message);
+
+  const total = count ?? 0;
+  return {
+    transactions: (data ?? []) as Transaction[],
+    total,
+    hasMore: offset + limit < total,
+  };
+}
+
+/**
+ * Distinct countries seen across the household's transactions, for the
+ * country filter dropdown. Fetches only the `country` column (cheap even
+ * at thousands of rows) rather than full rows, and is explicitly capped
+ * -- this bounds a value-discovery query, not the transaction list itself.
+ */
+export async function getDistinctTransactionCountries(): Promise<string[]> {
+  const current = await getCurrentMember();
+  if (!current) return [];
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('transactions')
+    .select('country')
+    .eq('household_id', current.household.id)
+    .not('country', 'is', null)
+    .limit(5000);
+  return [...new Set((data ?? []).map((r) => r.country as string).filter(Boolean))].sort();
+}
+
 export interface ShoppingData {
   categories: ShoppingCategory[];
   trips: ShoppingTrip[];

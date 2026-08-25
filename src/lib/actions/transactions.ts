@@ -3,7 +3,16 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { db, requireHousehold, genId, str, num, bool } from './helpers';
+import { getTransactionsPage, type TransactionFilters, type TransactionsPageResult } from '@/lib/supabase/queries';
 import type { ReceiptItem } from '@/lib/finance/types';
+
+/** Callable from the client (via useTransition) to fetch a page of the filtered/paginated transactions list. */
+export async function loadTransactionsPage(
+  filters: TransactionFilters,
+  offset: number
+): Promise<TransactionsPageResult | null> {
+  return getTransactionsPage(filters, offset);
+}
 
 /**
  * Core insert, with no redirect -- reused by createTransaction (the
