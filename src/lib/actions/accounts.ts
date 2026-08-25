@@ -1,8 +1,9 @@
 'use server';
 
+import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { db, requireHousehold, genId, str, num } from './helpers';
-import { createTransaction } from './transactions';
+import { insertTransaction } from './transactions';
 
 export async function createAccount(formData: FormData) {
   const { household } = await requireHousehold();
@@ -20,6 +21,7 @@ export async function createAccount(formData: FormData) {
   });
   if (error) throw new Error(error.message);
   revalidatePath('/accounts');
+  redirect('/accounts');
 }
 
 export async function updateAccount(id: string, formData: FormData) {
@@ -39,6 +41,7 @@ export async function updateAccount(id: string, formData: FormData) {
     .eq('id', id);
   if (error) throw new Error(error.message);
   revalidatePath('/accounts');
+  redirect('/accounts');
 }
 
 export async function deleteAccount(id: string) {
@@ -47,6 +50,7 @@ export async function deleteAccount(id: string) {
   const { error } = await supabase.from('accounts').delete().eq('id', id);
   if (error) throw new Error(error.message);
   revalidatePath('/accounts');
+  redirect('/accounts');
 }
 
 /**
@@ -72,6 +76,7 @@ export async function transferBetweenAccounts(formData: FormData) {
   wrapped.set('to_account_id', toId);
   if (str(formData, 'notes')) wrapped.set('notes', str(formData, 'notes')!);
 
-  await createTransaction(wrapped);
+  await insertTransaction(wrapped);
   revalidatePath('/accounts');
+  redirect('/accounts');
 }

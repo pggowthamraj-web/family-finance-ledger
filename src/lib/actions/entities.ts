@@ -199,6 +199,7 @@ export async function createInvestment(formData: FormData) {
   if (error) throw new Error(error.message);
   revalidatePath('/investments');
   revalidatePath('/dashboard');
+  redirect('/investments');
 }
 
 export async function updateInvestment(id: string, formData: FormData) {
@@ -226,6 +227,7 @@ export async function updateInvestment(id: string, formData: FormData) {
   if (error) throw new Error(error.message);
   revalidatePath('/investments');
   revalidatePath('/dashboard');
+  redirect('/investments');
 }
 
 export async function deleteInvestment(id: string) {
@@ -235,6 +237,7 @@ export async function deleteInvestment(id: string) {
   if (error) throw new Error(error.message);
   revalidatePath('/investments');
   revalidatePath('/dashboard');
+  redirect('/investments');
 }
 
 // --- liabilities -----------------------------------------------------

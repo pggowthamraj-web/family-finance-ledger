@@ -27,6 +27,7 @@ export async function createGoal(formData: FormData) {
   if (error) throw new Error(error.message);
   revalidatePath('/goals');
   revalidatePath('/dashboard');
+  redirect('/goals');
 }
 
 export async function updateGoal(id: string, formData: FormData) {
@@ -51,6 +52,7 @@ export async function updateGoal(id: string, formData: FormData) {
   if (error) throw new Error(error.message);
   revalidatePath('/goals');
   revalidatePath('/dashboard');
+  redirect('/goals');
 }
 
 export async function deleteGoal(id: string) {
@@ -60,6 +62,7 @@ export async function deleteGoal(id: string) {
   if (error) throw new Error(error.message);
   revalidatePath('/goals');
   revalidatePath('/dashboard');
+  redirect('/goals');
 }
 
 export async function addGoalContribution(id: string, amount: number, date: string) {

@@ -5,7 +5,12 @@ import { revalidatePath } from 'next/cache';
 import { db, requireHousehold, genId, str, num, bool } from './helpers';
 import type { ReceiptItem } from '@/lib/finance/types';
 
-export async function createTransaction(formData: FormData) {
+/**
+ * Core insert, with no redirect -- reused by createTransaction (the
+ * "New transaction" form action) and transferBetweenAccounts (which
+ * needs to redirect to /accounts instead of /transactions on success).
+ */
+export async function insertTransaction(formData: FormData) {
   const { household, member } = await requireHousehold();
   const supabase = await db();
 
@@ -37,6 +42,10 @@ export async function createTransaction(formData: FormData) {
   revalidatePath('/dashboard');
   revalidatePath('/transactions');
   revalidatePath('/accounts');
+}
+
+export async function createTransaction(formData: FormData) {
+  await insertTransaction(formData);
   redirect('/transactions');
 }
 
