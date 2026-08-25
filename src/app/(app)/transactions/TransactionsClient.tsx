@@ -101,10 +101,10 @@ export function TransactionsClient({ data }: { data: HouseholdData }) {
       <div className="space-y-2">
         {filtered.slice(0, 200).map((t) => (
           <Link key={t.id} href={`/transactions/${t.id}/edit`} className="block">
-            <Card className="flex items-center justify-between py-3">
-              <div className="flex items-center gap-3">
+            <Card className="flex items-center justify-between gap-3 py-3">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
                 <div
-                  className={`flex h-9 w-9 items-center justify-center rounded-full ${
+                  className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full ${
                     t.type === 'income' ? 'bg-emerald-100' : t.type === 'expense' ? 'bg-rose-100' : 'bg-teal-900/[0.08]'
                   }`}
                 >
@@ -116,9 +116,9 @@ export function TransactionsClient({ data }: { data: HouseholdData }) {
                     <ArrowLeftRight size={16} className="text-teal-700" />
                   )}
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-teal-900 line-clamp-1">{t.description || 'Untitled'}</p>
-                  <p className="text-xs text-teal-900/50">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-teal-900">{t.description || 'Untitled'}</p>
+                  <p className="truncate text-xs text-teal-900/50">
                     {t.date} · {t.type === 'transfer' ? `${accountName(t.account_id)} → ${accountName(t.to_account_id ?? '')}` : categoryName(t.category_id)}
                   </p>
                 </div>
@@ -127,9 +127,9 @@ export function TransactionsClient({ data }: { data: HouseholdData }) {
                 amount={t.amount}
                 currency={t.currency}
                 signed={t.type !== 'transfer'}
-                className={
+                className={`flex-shrink-0 whitespace-nowrap ${
                   t.type === 'income' ? 'text-emerald-500' : t.type === 'expense' ? 'text-rose-500' : 'text-teal-900/70'
-                }
+                }`}
               />
             </Card>
           </Link>
