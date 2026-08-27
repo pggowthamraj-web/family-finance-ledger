@@ -62,7 +62,7 @@ export async function createRecurring(formData: FormData) {
     frequency: str(formData, 'frequency') ?? 'monthly',
     account_id: str(formData, 'account_id'),
     person_id: str(formData, 'person_id'),
-    active: true,
+    active: bool(formData, 'active'),
     type: str(formData, 'type') ?? 'expense',
     notes: str(formData, 'notes'),
     start_date: str(formData, 'start_date'),
@@ -71,6 +71,7 @@ export async function createRecurring(formData: FormData) {
   if (error) throw new Error(error.message);
   revalidatePath('/more/recurring');
   revalidatePath('/dashboard');
+  redirect('/more/recurring');
 }
 
 export async function updateRecurring(id: string, formData: FormData) {
@@ -97,6 +98,7 @@ export async function updateRecurring(id: string, formData: FormData) {
   if (error) throw new Error(error.message);
   revalidatePath('/more/recurring');
   revalidatePath('/dashboard');
+  redirect('/more/recurring');
 }
 
 export async function deleteRecurring(id: string) {
@@ -106,6 +108,7 @@ export async function deleteRecurring(id: string) {
   if (error) throw new Error(error.message);
   revalidatePath('/more/recurring');
   revalidatePath('/dashboard');
+  redirect('/more/recurring');
 }
 
 // --- assets --------------------------------------------------------------
