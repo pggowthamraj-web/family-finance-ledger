@@ -1,6 +1,6 @@
 import { getHouseholdData } from '@/lib/supabase/queries';
 import { createRecurring, deleteRecurring, updateRecurring } from '@/lib/actions/entities';
-import { recurringMonthlyCommitment, monthlyNormalizedAmount } from '@/lib/finance/recurring';
+import { recurringMonthlyCommitment, monthlyNormalizedAmount, isRecurringCurrentlyInWindow } from '@/lib/finance/recurring';
 import { PageHeader } from '@/components/PageHeader';
 import { Card, SectionHeader } from '@/components/ui/Card';
 import { Money } from '@/components/ui/Money';
@@ -13,8 +13,8 @@ export default async function RecurringPage() {
   if (!data) return null;
   const { recurringTransactions, categories, accounts, members, household } = data;
 
-  const commitment = recurringMonthlyCommitment(recurringTransactions, household.exchange_rates);
-  const categoryName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? '—';
+  const today = new Date().toISOString().slice(0, 10);
+  const commitment = recurringMonthlyCommitment(recurringTransactions, household.exchange_rates, { today });
 
   return (
     <div>
@@ -24,53 +24,114 @@ export default async function RecurringPage() {
         <p className="text-xs font-medium text-teal-900/50">Monthly commitment (expenses only)</p>
         <Money amount={commitment} currency={household.base_currency} className="text-2xl" />
         <p className="mt-1 text-xs text-teal-900/40">
-          Informational only — normalized by frequency, never counted in actual transaction totals.
+          Informational only — normalized by frequency, never counted in actual transaction totals. Only active items
+          within their start/end date window count toward this figure.
         </p>
       </Card>
 
       <div className="space-y-2">
-        {recurringTransactions.map((r) => (
-          <Card key={r.id}>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="font-medium text-teal-900">{r.description}</p>
-                <p className="text-xs text-teal-900/50">
-                  {categoryName(r.category_id)} · {r.frequency}
-                  {!r.active && ' · inactive'}
-                </p>
-              </div>
-              <div className="text-right">
-                <Money amount={r.amount} currency={r.currency} className={r.type === 'income' ? 'text-emerald-500' : 'text-rose-500'} />
-                <p className="text-[10px] text-teal-900/40">
-                  ≈ <Money amount={monthlyNormalizedAmount(r)} currency={r.currency} compact /> /mo
-                </p>
-              </div>
-            </div>
-            <div className="mt-2 flex items-center gap-3">
-              <form action={updateRecurring.bind(null, r.id)}>
-                <input type="hidden" name="description" value={r.description} />
-                <input type="hidden" name="amount" value={r.amount} />
-                <input type="hidden" name="currency" value={r.currency} />
-                <input type="hidden" name="category_id" value={r.category_id ?? ''} />
-                <input type="hidden" name="frequency" value={r.frequency} />
-                <input type="hidden" name="account_id" value={r.account_id ?? ''} />
-                <input type="hidden" name="person_id" value={r.person_id ?? ''} />
-                <input type="hidden" name="type" value={r.type} />
-                <input type="hidden" name="notes" value={r.notes ?? ''} />
-                <input type="hidden" name="start_date" value={r.start_date ?? ''} />
-                <input type="hidden" name="end_date" value={r.end_date ?? ''} />
-                {r.active && <input type="hidden" name="active" value="" />}
-                {!r.active && <input type="hidden" name="active" value="on" />}
-                <button type="submit" className="text-xs font-medium text-teal-700">
-                  {r.active ? 'Mark inactive' : 'Mark active'}
-                </button>
+        {recurringTransactions.map((r) => {
+          const inWindow = isRecurringCurrentlyInWindow(r, today);
+          const statusHint =
+            r.active && !inWindow
+              ? r.start_date && today < r.start_date
+                ? `Starts ${r.start_date} — not yet counted in the total`
+                : r.end_date && today > r.end_date
+                  ? `Ended ${r.end_date} — no longer counted in the total`
+                  : null
+              : null;
+
+          return (
+            <Card key={r.id}>
+              <form action={updateRecurring.bind(null, r.id)} className="space-y-2">
+                <input name="description" defaultValue={r.description} required placeholder="Description" className={inputClass} />
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="amount"
+                    defaultValue={r.amount}
+                    required
+                    placeholder="Amount"
+                    className={inputClass}
+                  />
+                  <select name="currency" defaultValue={r.currency} className={inputClass}>
+                    {CURRENCIES.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.code}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex gap-2">
+                  <select name="type" defaultValue={r.type} className={inputClass}>
+                    <option value="expense">Expense</option>
+                    <option value="income">Income</option>
+                  </select>
+                  <select name="frequency" defaultValue={r.frequency} className={inputClass}>
+                    {FREQUENCIES.map((f) => (
+                      <option key={f} value={f}>
+                        {f}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <select name="category_id" defaultValue={r.category_id ?? ''} className={inputClass}>
+                  <option value="">Uncategorized</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex gap-2">
+                  <select name="account_id" defaultValue={r.account_id ?? ''} className={inputClass}>
+                    <option value="">No account</option>
+                    {accounts.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.name}
+                      </option>
+                    ))}
+                  </select>
+                  <select name="person_id" defaultValue={r.person_id ?? ''} className={inputClass}>
+                    <option value="">Unassigned</option>
+                    {members.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex gap-2">
+                  <label className="flex-1">
+                    <span className="mb-1 block text-xs font-medium text-teal-900/50">Start date</span>
+                    <input type="date" name="start_date" defaultValue={r.start_date ?? ''} className={inputClass} />
+                  </label>
+                  <label className="flex-1">
+                    <span className="mb-1 block text-xs font-medium text-teal-900/50">End date</span>
+                    <input type="date" name="end_date" defaultValue={r.end_date ?? ''} className={inputClass} />
+                  </label>
+                </div>
+                <input name="notes" defaultValue={r.notes ?? ''} placeholder="Notes" className={inputClass} />
+                <label className="flex items-center gap-2 text-xs font-medium text-teal-900/70">
+                  <input type="checkbox" name="active" defaultChecked={r.active} /> Active
+                </label>
+                {statusHint && <p className="text-[11px] text-amber-600">{statusHint}</p>}
+                <div className="flex items-center justify-between pt-1">
+                  <p className="text-[10px] text-teal-900/40">
+                    ≈ <Money amount={monthlyNormalizedAmount(r)} currency={r.currency} compact /> /mo
+                  </p>
+                  <button type="submit" className="rounded-lg bg-teal-900 px-4 py-1.5 text-xs font-medium text-white">
+                    Save
+                  </button>
+                </div>
               </form>
-              <form action={deleteRecurring.bind(null, r.id)}>
+              <form action={deleteRecurring.bind(null, r.id)} className="mt-2">
                 <button className="text-xs font-medium text-rose-500">Delete</button>
               </form>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
       </div>
 
       <Card className="mt-4">
@@ -125,6 +186,16 @@ export default async function RecurringPage() {
                 </option>
               ))}
             </select>
+          </div>
+          <div className="flex gap-2">
+            <label className="flex-1">
+              <span className="mb-1 block text-xs font-medium text-teal-900/50">Start date</span>
+              <input type="date" name="start_date" className={inputClass} />
+            </label>
+            <label className="flex-1">
+              <span className="mb-1 block text-xs font-medium text-teal-900/50">End date</span>
+              <input type="date" name="end_date" className={inputClass} />
+            </label>
           </div>
           <button type="submit" className="w-full rounded-xl bg-teal-900 py-2.5 text-sm font-medium text-white">
             Add
