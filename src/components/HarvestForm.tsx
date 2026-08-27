@@ -1,7 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import type { FarmHarvest } from '@/lib/finance/types';
 import { CURRENCIES } from '@/lib/finance/currency';
+import { harvestIncome } from '@/lib/finance/farm';
+import { Money } from '@/components/ui/Money';
 
 export function HarvestForm({
   action,
@@ -10,8 +13,31 @@ export function HarvestForm({
   action: (formData: FormData) => void | Promise<void>;
   existing?: FarmHarvest;
 }) {
+  const [currency, setCurrency] = useState(existing?.currency ?? 'INR');
+  const [smallCount, setSmallCount] = useState(existing?.small_coconuts_count ?? 0);
+  const [smallPrice, setSmallPrice] = useState(existing?.small_coconut_price ?? 0);
+  const [bigCount, setBigCount] = useState(existing?.big_coconuts_count ?? 0);
+  const [bigPrice, setBigPrice] = useState(existing?.big_coconut_price ?? 0);
+  const [watchmanSalary, setWatchmanSalary] = useState(existing?.watchman_salary ?? 0);
+  const [labourCharges, setLabourCharges] = useState(existing?.labour_charges ?? 0);
+
+  const income = harvestIncome({
+    small_coconuts_count: smallCount,
+    small_coconut_price: smallPrice,
+    big_coconuts_count: bigCount,
+    big_coconut_price: bigPrice,
+    watchman_salary: watchmanSalary,
+    labour_charges: labourCharges,
+  });
+
   return (
     <form action={action} className="space-y-4">
+      <div className="rounded-xl bg-teal-900/[0.06] p-3">
+        <p className="text-xs font-medium text-teal-900/60">Income for this harvest</p>
+        <Money amount={income} currency={currency} signed className={`text-xl ${income >= 0 ? 'text-emerald-600' : 'text-rose-600'}`} />
+        <p className="mt-0.5 text-[11px] text-teal-900/40">Updates live as you edit the fields below.</p>
+      </div>
+
       <div className="flex gap-2">
         <Field label="Date of harvest" className="flex-1">
           <input type="date" name="harvest_date" required defaultValue={existing?.harvest_date ?? ''} className={inputClass} />
@@ -32,7 +58,8 @@ export function HarvestForm({
           <input
             type="number"
             name="small_coconuts_count"
-            defaultValue={existing?.small_coconuts_count ?? 0}
+            value={smallCount}
+            onChange={(e) => setSmallCount(Number(e.target.value) || 0)}
             className={inputClass}
           />
         </Field>
@@ -41,7 +68,8 @@ export function HarvestForm({
             type="number"
             step="0.01"
             name="small_coconut_price"
-            defaultValue={existing?.small_coconut_price ?? 0}
+            value={smallPrice}
+            onChange={(e) => setSmallPrice(Number(e.target.value) || 0)}
             className={inputClass}
           />
         </Field>
@@ -53,7 +81,8 @@ export function HarvestForm({
           <input
             type="number"
             name="big_coconuts_count"
-            defaultValue={existing?.big_coconuts_count ?? 0}
+            value={bigCount}
+            onChange={(e) => setBigCount(Number(e.target.value) || 0)}
             className={inputClass}
           />
         </Field>
@@ -62,7 +91,8 @@ export function HarvestForm({
             type="number"
             step="0.01"
             name="big_coconut_price"
-            defaultValue={existing?.big_coconut_price ?? 0}
+            value={bigPrice}
+            onChange={(e) => setBigPrice(Number(e.target.value) || 0)}
             className={inputClass}
           />
         </Field>
@@ -74,7 +104,8 @@ export function HarvestForm({
             type="number"
             step="0.01"
             name="watchman_salary"
-            defaultValue={existing?.watchman_salary ?? 0}
+            value={watchmanSalary}
+            onChange={(e) => setWatchmanSalary(Number(e.target.value) || 0)}
             className={inputClass}
           />
         </Field>
@@ -83,7 +114,8 @@ export function HarvestForm({
             type="number"
             step="0.01"
             name="labour_charges"
-            defaultValue={existing?.labour_charges ?? 0}
+            value={labourCharges}
+            onChange={(e) => setLabourCharges(Number(e.target.value) || 0)}
             className={inputClass}
           />
         </Field>
@@ -91,7 +123,7 @@ export function HarvestForm({
 
       <div className="flex gap-2">
         <Field label="Currency" className="flex-1">
-          <select name="currency" defaultValue={existing?.currency ?? 'INR'} className={inputClass}>
+          <select name="currency" value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputClass}>
             {CURRENCIES.map((c) => (
               <option key={c.code} value={c.code}>
                 {c.code}
@@ -112,8 +144,6 @@ export function HarvestForm({
       <Field label="Notes">
         <textarea name="notes" rows={2} defaultValue={existing?.notes ?? ''} className={inputClass} />
       </Field>
-
-      <p className="text-xs text-teal-900/40">Income = (small count × small price) + (big count × big price) − labour charges − watchman salary.</p>
 
       <button type="submit" className="w-full rounded-xl bg-teal-900 py-3 font-medium text-white active:scale-[0.99]">
         {existing ? 'Save changes' : 'Add harvest'}
