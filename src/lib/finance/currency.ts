@@ -43,6 +43,26 @@ export function convertToBase(
   return amount * rate;
 }
 
+/**
+ * Convert `amount` from `fromCurrency` into any `toCurrency` (not just the
+ * household's base), by going via base currency: amount -> base -> target.
+ * `rates` is still the household's { CODE: rateAgainstBase } map. Falls back
+ * to the base-currency value if `toCurrency` isn't in the rate map, rather
+ * than dividing by zero/undefined.
+ */
+export function convertToCurrency(
+  amount: number,
+  fromCurrency: string,
+  toCurrency: string,
+  rates: Record<string, number>
+): number {
+  if (fromCurrency === toCurrency) return amount;
+  const inBase = convertToBase(amount, fromCurrency, rates);
+  const toRate = rates[toCurrency];
+  if (!toRate) return inBase;
+  return inBase / toRate;
+}
+
 export function formatMoney(amount: number, currency: string, rates?: Record<string, number>): string {
   const symbol = currencySymbol(currency, rates);
   const formatted = Math.abs(amount).toLocaleString(undefined, {

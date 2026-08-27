@@ -1,5 +1,5 @@
 import type { FarmFertilizerApplication, FarmHarvest } from './types';
-import { convertToBase } from './currency';
+import { convertToCurrency } from './currency';
 
 /** Gross coconut sale revenue for one harvest, before labour/watchman costs. */
 export function harvestRevenue(h: Pick<FarmHarvest, 'small_coconuts_count' | 'small_coconut_price' | 'big_coconuts_count' | 'big_coconut_price'>): number {
@@ -24,6 +24,7 @@ export function fertilizerApplicationCost(
 }
 
 export interface FarmSummary {
+  currency: string;
   totalRevenue: number;
   totalHarvestCosts: number;
   totalHarvestIncome: number;
@@ -34,11 +35,17 @@ export interface FarmSummary {
   lastHarvestDate: string | null;
 }
 
-/** Household-wide farm summary, all figures converted to base currency. */
+/**
+ * Household-wide farm summary. Reported in `reportingCurrency` (INR by
+ * default) rather than the household's base currency -- the farm is an
+ * India-based venture, entered in rupees regardless of what currency the
+ * rest of the household's finances are tracked in.
+ */
 export function farmSummary(
   harvests: FarmHarvest[],
   fertilizerApplications: FarmFertilizerApplication[],
-  baseRates: Record<string, number>
+  rates: Record<string, number>,
+  reportingCurrency = 'INR'
 ): FarmSummary {
   let totalRevenue = 0;
   let totalHarvestCosts = 0;
@@ -46,8 +53,8 @@ export function farmSummary(
   let lastHarvestDate: string | null = null;
 
   for (const h of harvests) {
-    const revenue = convertToBase(harvestRevenue(h), h.currency, baseRates);
-    const costs = convertToBase(h.labour_charges + h.watchman_salary, h.currency, baseRates);
+    const revenue = convertToCurrency(harvestRevenue(h), h.currency, reportingCurrency, rates);
+    const costs = convertToCurrency(h.labour_charges + h.watchman_salary, h.currency, reportingCurrency, rates);
     totalRevenue += revenue;
     totalHarvestCosts += costs;
     totalHarvestIncome += revenue - costs;
@@ -55,11 +62,12 @@ export function farmSummary(
   }
 
   const totalFertilizerCost = fertilizerApplications.reduce(
-    (sum, f) => sum + convertToBase(fertilizerApplicationCost(f), f.currency, baseRates),
+    (sum, f) => sum + convertToCurrency(fertilizerApplicationCost(f), f.currency, reportingCurrency, rates),
     0
   );
 
   return {
+    currency: reportingCurrency,
     totalRevenue,
     totalHarvestCosts,
     totalHarvestIncome,

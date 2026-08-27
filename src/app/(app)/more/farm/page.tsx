@@ -22,21 +22,21 @@ export default async function FarmPage() {
           <p className="text-xs font-medium text-teal-900/50">Net income</p>
           <Money
             amount={summary.net}
-            currency={household.base_currency}
+            currency={summary.currency}
             className={`text-xl ${summary.net >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}
           />
         </Card>
         <Card>
           <p className="text-xs font-medium text-teal-900/50">Harvest income</p>
-          <Money amount={summary.totalHarvestIncome} currency={household.base_currency} className="text-xl text-emerald-500" />
+          <Money amount={summary.totalHarvestIncome} currency={summary.currency} className="text-xl text-emerald-500" />
         </Card>
         <Card>
           <p className="text-xs font-medium text-teal-900/50">Coconut revenue</p>
-          <Money amount={summary.totalRevenue} currency={household.base_currency} className="text-xl" />
+          <Money amount={summary.totalRevenue} currency={summary.currency} className="text-xl" />
         </Card>
         <Card>
           <p className="text-xs font-medium text-teal-900/50">Fertiliser & labour spend</p>
-          <Money amount={summary.totalHarvestCosts + summary.totalFertilizerCost} currency={household.base_currency} className="text-xl text-rose-500" />
+          <Money amount={summary.totalHarvestCosts + summary.totalFertilizerCost} currency={summary.currency} className="text-xl text-rose-500" />
         </Card>
       </div>
 

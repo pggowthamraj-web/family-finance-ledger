@@ -38,19 +38,17 @@ export function HarvestForm({
         <p className="mt-0.5 text-[11px] text-teal-900/40">Updates live as you edit the fields below.</p>
       </div>
 
-      <div className="flex gap-2">
-        <Field label="Date of harvest" className="flex-1">
-          <input type="date" name="harvest_date" required defaultValue={existing?.harvest_date ?? ''} className={inputClass} />
-        </Field>
-        <Field label="Trees harvested" className="flex-1">
-          <input
-            type="number"
-            name="trees_harvested"
-            defaultValue={existing?.trees_harvested ?? 0}
-            className={inputClass}
-          />
-        </Field>
-      </div>
+      <Field label="Date of harvest">
+        <input type="date" name="harvest_date" required defaultValue={existing?.harvest_date ?? ''} className={inputClass} />
+      </Field>
+      <Field label="Trees harvested">
+        <input
+          type="number"
+          name="trees_harvested"
+          defaultValue={existing?.trees_harvested ?? 0}
+          className={inputClass}
+        />
+      </Field>
 
       <p className="text-xs font-medium text-teal-900/50">Small coconuts</p>
       <div className="flex gap-2">

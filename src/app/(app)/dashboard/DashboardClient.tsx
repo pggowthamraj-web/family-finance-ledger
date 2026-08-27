@@ -20,11 +20,17 @@ import { Card, SectionHeader } from '@/components/ui/Card';
 import { Money } from '@/components/ui/Money';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Target } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Target, TreePalm, ChevronRight } from 'lucide-react';
 
 type PeriodKind = 'month' | 'year' | 'financial-year' | 'all';
 
-export function DashboardClient({ data }: { data: HouseholdData }) {
+export function DashboardClient({
+  data,
+  farmIncome,
+}: {
+  data: HouseholdData;
+  farmIncome: { amount: number; currency: string } | null;
+}) {
   const { household, members, categories, transactions, assets, investments, liabilities, recurringTransactions, goals } = data;
   const rates = household.exchange_rates;
 
@@ -205,6 +211,26 @@ export function DashboardClient({ data }: { data: HouseholdData }) {
           <p className="font-mono text-lg tabular-nums text-teal-900">{summary.savingsRate.toFixed(1)}%</p>
         </Card>
       </div>
+
+      {farmIncome && (
+        <Link href="/more/farm">
+          <Card className="flex items-center justify-between">
+            <span className="flex items-center gap-2 text-sm text-teal-900/70">
+              <TreePalm size={16} className="text-teal-700" />
+              Yash Coconut Farm income
+            </span>
+            <span className="flex items-center gap-1">
+              <Money
+                amount={farmIncome.amount}
+                currency={farmIncome.currency}
+                signed
+                className={`text-sm font-medium ${farmIncome.amount >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}
+              />
+              <ChevronRight size={14} className="text-teal-900/30" />
+            </span>
+          </Card>
+        </Link>
+      )}
 
       {/* Recurring commitment vs one-time */}
       <Card>

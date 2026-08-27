@@ -32,26 +32,24 @@ export function FertilizerForm({
         <p className="mt-0.5 text-[11px] text-teal-900/40">Updates live as you edit the fields below.</p>
       </div>
 
-      <div className="flex gap-2">
-        <Field label="Date" className="flex-1">
-          <input
-            type="date"
-            name="application_date"
-            required
-            defaultValue={existing?.application_date ?? ''}
-            className={inputClass}
-          />
-        </Field>
-        <Field label="No. of trees" className="flex-1">
-          <input
-            type="number"
-            name="trees_count"
-            value={treesCount}
-            onChange={(e) => setTreesCount(Number(e.target.value) || 0)}
-            className={inputClass}
-          />
-        </Field>
-      </div>
+      <Field label="Date">
+        <input
+          type="date"
+          name="application_date"
+          required
+          defaultValue={existing?.application_date ?? ''}
+          className={inputClass}
+        />
+      </Field>
+      <Field label="No. of trees">
+        <input
+          type="number"
+          name="trees_count"
+          value={treesCount}
+          onChange={(e) => setTreesCount(Number(e.target.value) || 0)}
+          className={inputClass}
+        />
+      </Field>
 
       <div className="flex gap-2">
         <Field label="Fertiliser cost / tree" className="flex-1">
