@@ -14,6 +14,7 @@ import {
   Moon,
   LogOut,
   ChevronRight,
+  TreePalm,
 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { signOut } from '@/lib/actions/auth';
@@ -23,6 +24,7 @@ const ITEMS = [
   { href: '/more/members', label: 'Family Members', icon: Users },
   { href: '/more/categories', label: 'Categories', icon: Tags },
   { href: '/more/recurring', label: 'Recurring Transactions', icon: Repeat },
+  { href: '/more/farm', label: 'Yash Coconut Farm', icon: TreePalm },
   { href: '/more/assets', label: 'Assets', icon: Building2 },
   { href: '/more/liabilities', label: 'Liabilities', icon: CreditCard },
   { href: '/more/budgets', label: 'Budgets', icon: PiggyBank },

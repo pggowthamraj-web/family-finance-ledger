@@ -267,3 +267,37 @@ export interface ShoppingItem {
   price: number;
   category_id: string | null;
 }
+
+// Yash Coconut Farm — see supabase/migrations/0004_coconut_farm.sql
+
+export interface FarmHarvest {
+  id: string;
+  household_id: string;
+  harvest_date: string;
+  trees_harvested: number;
+  small_coconuts_count: number;
+  small_coconut_price: number; // per coconut
+  big_coconuts_count: number;
+  big_coconut_price: number; // per coconut
+  watchman_salary: number;
+  labour_charges: number;
+  currency: CurrencyCode;
+  performed_by: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FarmFertilizerApplication {
+  id: string;
+  household_id: string;
+  application_date: string;
+  trees_count: number;
+  fertilizer_cost_per_tree: number;
+  labour_cost_per_tree: number;
+  currency: CurrencyCode;
+  performed_by: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}

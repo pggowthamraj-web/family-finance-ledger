@@ -44,7 +44,8 @@ In the Supabase SQL editor (Project → SQL Editor → New query), run these
 1. `supabase/migrations/0001_schema.sql`
 2. `supabase/migrations/0002_rls.sql`
 3. `supabase/migrations/0003_auth_link.sql`
-4. `supabase/seed/seed.sql` — generate this first if it isn't already
+4. `supabase/migrations/0004_coconut_farm.sql` — adds the Yash Coconut Farm tables
+5. `supabase/seed/seed.sql` — generate this first if it isn't already
    present (it's git-ignored on purpose, see `supabase/seed/README.md`):
 
    ```

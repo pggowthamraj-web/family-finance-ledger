@@ -4,6 +4,8 @@ import type {
   Asset,
   Budget,
   Category,
+  FarmFertilizerApplication,
+  FarmHarvest,
   Goal,
   Household,
   Investment,
@@ -252,5 +254,34 @@ export async function getShoppingData(): Promise<ShoppingData | null> {
     categories: (categories ?? []) as ShoppingCategory[],
     trips: (trips ?? []) as ShoppingTrip[],
     items: (items ?? []) as ShoppingItem[],
+  };
+}
+
+export interface FarmData {
+  household: Household;
+  harvests: FarmHarvest[];
+  fertilizerApplications: FarmFertilizerApplication[];
+}
+
+/** Yash Coconut Farm — a household side-venture, separate from the generic finance schema. */
+export async function getFarmData(): Promise<FarmData | null> {
+  const current = await getCurrentMember();
+  if (!current) return null;
+  const { household } = current;
+  const supabase = await createClient();
+
+  const [{ data: harvests }, { data: fertilizerApplications }] = await Promise.all([
+    supabase.from('farm_harvests').select('*').eq('household_id', household.id).order('harvest_date', { ascending: false }),
+    supabase
+      .from('farm_fertilizer_applications')
+      .select('*')
+      .eq('household_id', household.id)
+      .order('application_date', { ascending: false }),
+  ]);
+
+  return {
+    household,
+    harvests: (harvests ?? []) as FarmHarvest[],
+    fertilizerApplications: (fertilizerApplications ?? []) as FarmFertilizerApplication[],
   };
 }
